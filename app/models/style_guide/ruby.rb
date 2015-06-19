@@ -7,7 +7,11 @@ module StyleGuide
       if config.file_to_exclude?(file.filename)
         []
       else
-        team.inspect_file(parsed_source(file)).map do |violation|
+        parsed_source = parsed_source(file)
+        comment_config = parsed_source.comment_config
+
+        team.inspect_file(parsed_source).map do |violation|
+          next unless comment_config.cop_enabled_at_line?(violation, violation.line)
           line = file.line_at(violation.line)
 
           Violation.new(
@@ -17,7 +21,7 @@ module StyleGuide
             line_number: violation.line,
             messages: [violation.message]
           )
-        end
+        end.compact
       end
     end
 
