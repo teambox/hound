@@ -40,12 +40,12 @@ class StyleChecker
     case filename
     when /.+\.rb\z/
       StyleGuide::Ruby
-    when /.+\.coffee(\.js)?\z/
-      StyleGuide::CoffeeScript
-    when /.+\.js\z/
-      StyleGuide::JavaScript
-    when /.+\.scss\z/
-      StyleGuide::Scss
+    # when /.+\.coffee(\.js)?\z/
+    #   StyleGuide::CoffeeScript
+    # when /.+\.js\z/
+    #   StyleGuide::JavaScript
+    # when /.+\.scss\z/
+    #   StyleGuide::Scss
     else
       StyleGuide::Unsupported
     end
