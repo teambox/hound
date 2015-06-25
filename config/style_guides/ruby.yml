@@ -19,6 +19,8 @@ AllCops:
   - "vendor/**/*"
   - "db/schema.rb"
   - "db/migrate/*"
+  - "lib/seeds/*"
+  - "lib/seed_database.rb"
   RunRailsCops: false
   DisplayCopNames: false
   StyleGuideCopsOnly: false
