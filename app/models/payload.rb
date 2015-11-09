@@ -62,20 +62,25 @@ class Payload
       "repository" => {
         "id" => github_repo_id,
         "full_name" => full_repo_name,
+        "private" => private_repo?,
         "owner" => {
-          "id" => repository_owner_name,
-          "login" => repository_owner_id,
+          "id" => repository_owner_id,
+          "login" => repository_owner_name,
           "type" => repository["owner"]["type"],
         }
       }
     }
   end
 
+  def private_repo?
+    repository["private"]
+  end
+
   private
 
   def parse_data
     if unparsed_data.is_a? String
-      JSON.parse(unparsed_data)
+      Config::Parser.json(unparsed_data)
     else
       unparsed_data
     end

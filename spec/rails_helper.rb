@@ -1,6 +1,5 @@
 ENV["RAILS_ENV"] ||= "test"
 
-require "rails_helper"
 require "config/environment"
 require "rspec/rails"
 
@@ -13,15 +12,21 @@ RSpec.configure do |config|
     DatabaseCleaner.clean
   end
 
+  config.before(:each, js: true) do
+    page.driver.block_unknown_urls
+  end
+
   config.infer_base_class_for_anonymous_controllers = false
   config.infer_spec_type_from_file_location!
   config.include AnalyticsHelper
   config.include AuthenticationHelper
+  config.include CommitFileHelper
   config.include Features, type: :feature
   config.include HttpsHelper
   config.include OauthHelper
   config.include FactoryGirl::Syntax::Methods
   DatabaseCleaner.strategy = :deletion
+  ActiveJob::Base.queue_adapter = :resque
 end
 
 Capybara.configure do |config|

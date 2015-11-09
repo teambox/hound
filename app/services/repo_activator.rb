@@ -8,29 +8,28 @@ class RepoActivator
   end
 
   def activate
-    activate_repo.tap { enqueue_org_invitation }
+    change_repository_state_quietly do
+      if repo.private?
+        add_hound_to_repo && create_webhook && repo.activate
+      else
+        create_webhook && repo.activate
+      end
+    end
   end
 
   def deactivate
-    deactivate_repo
+    change_repository_state_quietly do
+      if repo.private?
+        remove_hound_from_repo
+      end
+
+      delete_webhook && repo.deactivate
+    end
   end
 
   private
 
   attr_reader :github_token, :repo
-
-  def activate_repo
-    change_repository_state_quietly do
-      add_hound_to_repo && create_webhook && repo.activate
-    end
-  end
-
-  def deactivate_repo
-    change_repository_state_quietly do
-      remove_hound_from_repo
-      delete_webhook && repo.deactivate
-    end
-  end
 
   def change_repository_state_quietly
     yield
@@ -41,11 +40,11 @@ class RepoActivator
   end
 
   def remove_hound_from_repo
-    RemoveHoundFromRepo.run(repo.full_github_name, github)
+    github.remove_collaborator(repo.full_github_name, Hound::GITHUB_USERNAME)
   end
 
   def add_hound_to_repo
-    AddHoundToRepo.run(repo.full_github_name, github)
+    github.add_collaborator(repo.full_github_name, Hound::GITHUB_USERNAME)
   end
 
   def github
@@ -58,12 +57,6 @@ class RepoActivator
     end
   end
 
-  def enqueue_org_invitation
-    if repo.in_organization?
-      AcceptOrgInvitationsJob.perform_later
-    end
-  end
-
   def delete_webhook
     github.remove_hook(repo.full_github_name, repo.hook_id) do
       repo.update(hook_id: nil)
@@ -71,11 +64,11 @@ class RepoActivator
   end
 
   def builds_url
-    URI.join("#{protocol}://#{ENV["HOST"]}", "builds").to_s
+    URI.join("#{protocol}://#{Hound::HOST}", "builds").to_s
   end
 
   def protocol
-    if ENV.fetch("ENABLE_HTTPS") == "yes"
+    if Hound::HTTPS_ENABLED
       "https"
     else
       "http"

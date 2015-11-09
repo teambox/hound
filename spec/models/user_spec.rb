@@ -31,6 +31,27 @@ describe User do
     end
   end
 
+  describe "#token" do
+    it "generates saves encrypted token in database" do
+      user = build(:user)
+      user.token = "original-token"
+
+      user.save
+
+      expect(user["token"]).to_not eq(user.token)
+      expect(user["token"]).to_not eq("original-token")
+    end
+
+    it "returns original value of token on call" do
+      user = build(:user)
+      user.token = "original-token"
+
+      user.save
+
+      expect(user.reload.token).to eq("original-token")
+    end
+  end
+
   describe '#to_s' do
     it 'returns GitHub username' do
       user = build(:user)
@@ -38,6 +59,16 @@ describe User do
       user_string = user.to_s
 
       expect(user_string).to eq user.github_username
+    end
+  end
+
+  describe "#active_repos" do
+    it "returns active repos" do
+      user = create(:user)
+      active_repo = create(:repo, :active, users: [user])
+      create(:repo, :inactive, users: [user])
+
+      expect(user.active_repos).to eq([active_repo])
     end
   end
 
@@ -79,6 +110,24 @@ describe User do
         user.repos << repo
 
         expect(user).not_to have_repos_with_missing_information
+      end
+    end
+  end
+
+  describe "#has_access_to_private_repos?" do
+    context "when token scopes include repo" do
+      it "returns true" do
+        user = User.new(token_scopes: "repo,user:email")
+
+        expect(user).to have_access_to_private_repos
+      end
+    end
+
+    context "when token scopes don't include repo" do
+      it "returns false" do
+        user = User.new(token_scopes: "public_repo,user:email")
+
+        expect(user).not_to have_access_to_private_repos
       end
     end
   end

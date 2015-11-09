@@ -1,14 +1,14 @@
 class PullRequest
   pattr_initialize :payload, :token
 
+  FILE_REMOVED_STATUS = "removed"
+
   def comments
     @comments ||= user_github.pull_request_comments(full_repo_name, number)
   end
 
-  def pull_request_files
-    @pull_request_files ||= user_github.
-      pull_request_files(full_repo_name, number).
-      map { |file| build_commit_file(file) }
+  def commit_files
+    @commit_files ||= modified_commit_files
   end
 
   def comment_on_violation(violation)
@@ -39,8 +39,22 @@ class PullRequest
 
   private
 
-  def build_commit_file(file)
-    CommitFile.new(file, head_commit)
+  def modified_commit_files
+    modified_github_files.map do |github_file|
+      CommitFile.new(
+        filename: github_file.filename,
+        patch: github_file.patch,
+        commit: head_commit,
+      )
+    end
+  end
+
+  def modified_github_files
+    github_files = user_github.pull_request_files(full_repo_name, number)
+
+    github_files.select do |github_file|
+      github_file.status != FILE_REMOVED_STATUS
+    end
   end
 
   def user_github
@@ -48,7 +62,7 @@ class PullRequest
   end
 
   def hound_github
-    @hound_github ||= GithubApi.new(ENV["HOUND_GITHUB_TOKEN"])
+    @hound_github ||= GithubApi.new(Hound::GITHUB_TOKEN)
   end
 
   def number

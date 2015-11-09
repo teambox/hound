@@ -1,20 +1,23 @@
 class RepoSynchronization
-  pattr_initialize :user, :github_token
+  pattr_initialize :user
   attr_reader :user
 
   def start
     user.repos.clear
+    repos = api.repos
 
-    api.repos.each do |resource|
-      attributes = repo_attributes(resource.to_hash)
-      user.repos << Repo.find_or_create_with(attributes)
+    Repo.transaction do
+      repos.each do |resource|
+        attributes = repo_attributes(resource.to_hash)
+        user.repos << Repo.find_or_create_with(attributes)
+      end
     end
   end
 
   private
 
   def api
-    @api ||= GithubApi.new(github_token)
+    @api ||= GithubApi.new(user.token)
   end
 
   def repo_attributes(attributes)
