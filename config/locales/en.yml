@@ -6,7 +6,7 @@ en:
   search_placeholder: "Search by repo"
   pending_status: "Hound is busy reviewing changes..."
   success_status:
-    zero: "No violations found. Woof!"
+    zero: "No violations found. Ilya is happy!"
     one: "1 violation found."
     other: "%{count} violations found."
   config_error_status:
